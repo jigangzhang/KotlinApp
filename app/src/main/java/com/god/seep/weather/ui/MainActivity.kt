@@ -38,10 +38,11 @@ class MainActivity : AppCompatActivity() {
 
         fab.setOnClickListener { view ->
             Snackbar.make(view, "SnackBar Click", Snackbar.LENGTH_SHORT)
-                    .setAction("Action") { _ ->
+                    .setAction("Action") {
+                        it.width
                         Thread(Runnable {
                             Log.e("tag", "loading")
-                            Request("https://api.caiyunapp.com/v2/TAkhjf8d1nlSlspN/121.6544,25.1552/forecast.json").run()
+                            Request("lanzhou").run()
                         }).start()
                     }.show()
         }
