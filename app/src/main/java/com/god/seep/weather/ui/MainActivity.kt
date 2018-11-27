@@ -1,5 +1,6 @@
 package com.god.seep.weather.ui
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.*
@@ -58,7 +59,7 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val id = item.itemId
         if (id == R.id.action_settings) {
-            toast("menu click")
+            startActivity(Intent(this, TransportActivity::class.java))
             return true
         }
         return super.onOptionsItemSelected(item)
