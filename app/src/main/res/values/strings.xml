@@ -4,4 +4,8 @@
     <string name="section_format">Hello World from section: %1$d</string>
 
     <string name="Int">int</string>
+    <string name="state">状态</string>
+    <string name="connected">已连接</string>
+    <string name="disconnect">未连接</string>
+    <string name="connecting">连接中</string>
 </resources>
