@@ -1,8 +1,6 @@
 package com.god.seep.weather.net
 
-import java.io.File
-import java.io.InputStream
-import java.io.OutputStream
+import java.io.*
 import java.lang.Exception
 import java.net.InetSocketAddress
 import java.net.Socket
@@ -15,17 +13,21 @@ class NetConnection {
         val COMMAND_ACCEPT: String = "command_accept"
     }
 
-    private val host: String = "10.0.0.12"
+    private val host: String = "10.0.0.5"
     private val port: Int = 9999
     private var socket: Socket? = null
     private var mInputStream: InputStream? = null
     private var mOutputStream: OutputStream? = null
+    private var reader: BufferedReader? = null
+    private var writer: PrintWriter? = null
 
     init {
         try {
             socket = Socket(host, port)
             mInputStream = socket?.getInputStream()
             mOutputStream = socket?.getOutputStream()
+            reader = BufferedReader(InputStreamReader(mInputStream))
+            writer = PrintWriter(OutputStreamWriter(mOutputStream))
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -33,25 +35,29 @@ class NetConnection {
 
     fun reConnect() {
         socket?.connect(InetSocketAddress(host, port))
+        socket?.channel
         mInputStream = socket?.getInputStream()
         mOutputStream = socket?.getOutputStream()
+        reader = BufferedReader(InputStreamReader(mInputStream))
+        writer = PrintWriter(OutputStreamWriter(mOutputStream))
     }
-
-    fun getInputStream(): InputStream? = socket?.getInputStream()
-
-    fun getOutputStream(): OutputStream? = socket?.getOutputStream()
 
     fun isConnected(): Boolean = socket?.isConnected ?: false
 
-    fun readCommand(): String = mInputStream?.readBytes().toString()
+    fun getReader(): BufferedReader? = reader
+
+    fun getWriter(): PrintWriter? = writer
+
+    fun readCommand(): String = reader?.readLine() ?: ""
 
     fun writeCommand(command: String) {
-        mOutputStream?.write(command.toByteArray())
-        mOutputStream?.flush()
+        writer?.println(command)
+        writer?.flush()
     }
 
     fun sendFile(file: File) {
         mOutputStream?.write(file.inputStream().read())
+        mOutputStream?.flush()
     }
 
     fun saveFile(fileName: String) {
@@ -62,5 +68,9 @@ class NetConnection {
         }
     }
 
-    fun close() = socket?.close()
+    fun close() {
+        reader?.close()
+        writer?.close()
+        socket?.close()
+    }
 }

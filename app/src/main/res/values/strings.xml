@@ -8,4 +8,7 @@
     <string name="connected">已连接</string>
     <string name="disconnect">未连接</string>
     <string name="connecting">连接中</string>
+    <string name="send">发送</string>
+
+    <string name="hint_message">请输入信息</string>
 </resources>

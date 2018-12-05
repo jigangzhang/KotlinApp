@@ -32,3 +32,8 @@
         4、列表展示--历史文件（数据库保存信息）；
         5、文件查看功能--跳转至文件夹；
         6、其他。
+
+    三、指令：
+        1、server-list：server端指定文件夹下的文件列表；
+            （client发送list指令至server，server回送list json）
+        2、

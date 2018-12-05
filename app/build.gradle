@@ -7,7 +7,7 @@ android {
     compileSdkVersion 28
     defaultConfig {
         applicationId "com.god.seep.weather"
-        minSdkVersion 17
+        minSdkVersion 18
         targetSdkVersion 28
         versionCode 1
         versionName "0.0.1"
