@@ -5,10 +5,12 @@ import android.os.*
 import androidx.appcompat.app.AppCompatActivity
 import android.text.TextUtils
 import android.util.Log
+import androidx.recyclerview.widget.DividerItemDecoration
 import com.god.seep.weather.R
+import com.god.seep.weather.util.handleFileList
+import com.god.seep.weather.net.Command
 import com.god.seep.weather.net.NetConnection
 import kotlinx.android.synthetic.main.activity_transport.*
-import java.lang.Exception
 
 /**
  * 文件  C <--> S (相互传)
@@ -21,7 +23,11 @@ class TransportActivity : AppCompatActivity() {
         override fun handleMessage(msg: Message?) {
             super.handleMessage(msg)
             when (msg?.what) {
-                1 -> state_show.text = getString(R.string.connected)
+                Command.STATE_CONNECTED -> state_show.text = getString(R.string.connected)
+                Command.STATE_DISCONNECT -> state_show.text = getString(R.string.disconnect)
+                Command.STATE_CONNECTING -> state_show.text = getString(R.string.connecting)
+                Command.SHOW_FILE_LIST -> {
+                }
             }
         }
     }
@@ -35,6 +41,8 @@ class TransportActivity : AppCompatActivity() {
     }
 
     private fun initData() {
+        fileList.addItemDecoration(DividerItemDecoration(this, DividerItemDecoration.VERTICAL))
+        fileList.adapter = null
         btn_send.setOnClickListener {
             val message = message.text.toString()
             if (!TextUtils.isEmpty(message)) {
@@ -58,24 +66,21 @@ class TransportActivity : AppCompatActivity() {
 
         override fun onLooperPrepared() {
             connection = NetConnection()
-            if (connection != null && connection!!.isConnected()) {
-                try {
-                    mainHandler.sendEmptyMessage(1)
-                    threadHandler = object : Handler(looper) {
-                        override fun handleMessage(msg: Message?) {
-                            super.handleMessage(msg)
-                            when (msg?.what) {
-                                1 -> {
-                                    connection?.writeCommand(msg.obj as String)
-                                    Log.e("tag", "rev-->" + connection?.readCommand())
-                                }
-                            }
+            if (connection!!.isConnected())
+                mainHandler.sendEmptyMessage(Command.STATE_CONNECTED)
+            else
+                mainHandler.sendEmptyMessage(Command.STATE_DISCONNECT)
+            threadHandler = object : Handler(looper) {
+                override fun handleMessage(msg: Message?) {
+                    super.handleMessage(msg)
+                    when (msg?.what) {
+                        Command.GET_FILE_LIST -> handleFileList(connection, mainHandler)
+                        1 -> {
+                            connection?.writeCommand(msg.obj as String)
+                            Log.e("tag", "rev-->" + connection?.readCommand())
                         }
+
                     }
-                } catch (e: Exception) {
-                    Log.e("tag", "exception-->${e.message}" + e.printStackTrace())
-                } finally {
-//                    connection?.close()
                 }
             }
         }

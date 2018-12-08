@@ -3,6 +3,7 @@
     2、如何自动监听对端信息到来<br>
     3、如何不阻塞IO实现循环<br>
     4、在不阻塞IO的情况下实现任意发送或接受信息<br>
+    5、内部类持有外部类引用--线程中有一个内部线程类(runnable)，两个线程共同持有一个对象的情况<br>
 
 ###### Server端：<br>
     一、订阅-发布模式实现：<br>
@@ -37,3 +38,5 @@
         1、server-list：server端指定文件夹下的文件列表；
             （client发送list指令至server，server回送list json）
         2、
+
+    库：gson

@@ -7,10 +7,6 @@ import java.net.Socket
 
 class NetConnection {
     companion object {
-        val COMMAND_REV_FILE: String = "command_rev_file"
-        val COMMAND_SEND_FILE: String = "command_send_file"
-        val COMMAND_DENY: String = "command_deny"
-        val COMMAND_ACCEPT: String = "command_accept"
     }
 
     private val host: String = "10.0.0.5"
