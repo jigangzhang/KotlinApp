@@ -17,6 +17,6 @@ class Boy constructor(name: String, age: Int = 0) {
     }
 }
 
-data class Entity<T>(val success: Boolean, val data: T, val error: String)
+data class Entity<T>(val success: Boolean, var data: T, val error: String)
 
 data class FileInfo(val fileName: String, val fileSize: Long, val modifyTime: Long)
