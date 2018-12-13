@@ -5,18 +5,57 @@ apply plugin: 'androidx.navigation.safeargs'
 
 android {
     compileSdkVersion 28
-    defaultConfig {
-        applicationId "com.god.seep.weather"
-        minSdkVersion 18
-        targetSdkVersion 28
-        versionCode 1
-        versionName "0.0.1"
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+    def prop = new Properties()
+    def dis = project.rootProject.file('local.properties').newDataInputStream()
+    prop.load(dis)
+    def storePath = prop.getProperty('keystore.path')
+    signingConfigs {
+        release {
+            storeFile file(storePath)
+            storePassword prop.getProperty('keystore.password')
+            keyAlias prop.getProperty('keystore.alias')
+            keyPassword prop.getProperty('keystore.alias_password')
+        }
     }
+
     buildTypes {
         release {
             minifyEnabled false
+            shrinkResources false//是否去除无效的资源文件
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+        debug {
+            debuggable true
+            zipAlignEnabled true
+            minifyEnabled false
+            shrinkResources false
+            if (storePath)
+                signingConfig signingConfigs.release
+        }
+    }
+
+    /**
+     * 多渠道包
+     */
+    flavorDimensions ""
+    productFlavors {
+        pro {
+            applicationId "com.god.seep.weather"
+            minSdkVersion 18
+            targetSdkVersion 28
+            versionCode 1
+            versionName "0.0.1"
+            testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        }
+        dev {
+            applicationId "com.god.seep.weather"
+            minSdkVersion 18
+            targetSdkVersion 28
+            versionCode 1
+            versionName "0.0.1"
+            testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         }
     }
 }
@@ -25,7 +64,7 @@ dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     implementation 'androidx.appcompat:appcompat:1.0.2'
-    implementation 'com.google.android.material:material:1.1.0-alpha01'
+    implementation 'com.google.android.material:material:1.1.0-alpha02'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
     implementation "android.arch.navigation:navigation-fragment:$navi_version"
     // use -ktx for Kotlin
@@ -40,4 +79,5 @@ dependencies {
     //    androidTestImplementation "android.arch.navigation:navigation-testing:$navi_version"
     //    compile "org.jetbrains.kotlin:kotlin-reflect:1.2.60"
     implementation 'com.google.code.gson:gson:2.8.5'
+    implementation 'com.github.tbruyelle:rxpermissions:0.10.2'
 }

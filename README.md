@@ -1,3 +1,4 @@
+![avatar](https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1529908743507&di=acb27481e6ddaa80679d57d39e602036&imgtype=0&src=http%3A%2F%2Fpic31.photophoto.cn%2F20140415%2F0005018701019570_b.jpg)
 问题：<br>
     1、C、S任意一端可连续接收信息吗<br>
     2、如何自动监听对端信息到来<br>
@@ -95,3 +96,4 @@
         8、依赖注入：使用Kotlin
         9、换肤：
         10、回调函数：
+        11、字体适配：SP适用于字体大小跟随用户字体大小设置。DP，一些特殊情况,不想跟随系统字体变化，可以使用DP。

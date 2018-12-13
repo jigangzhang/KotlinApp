@@ -10,4 +10,5 @@
     <color name="gray_line">#c9c9c9</color>
     <color name="gray_text">#a7a4a4</color>
     <color name="green_light">#e4fd03</color>
+    <color name="red_light">#fd9103</color>
 </resources>

@@ -30,18 +30,28 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/bg_white_stroke"
+        android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:padding="10dp"
+        android:padding="5dp"
         app:layout_constraintTop_toBottomOf="@+id/state">
 
-        <EditText
+        <TextView
             android:id="@+id/message"
             android:layout_width="0dp"
             android:layout_height="40dp"
             android:layout_marginStart="@dimen/dp_16"
             android:layout_weight="1"
             android:background="@null"
-            android:hint="@string/hint_message"
+            android:gravity="center_vertical"
+            android:hint="@string/file_list"
+            android:textColorHint="@color/black_text"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/process"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/red_light"
             android:textSize="14sp" />
 
         <Button
@@ -50,7 +60,7 @@
             android:layout_height="40dp"
             android:layout_marginStart="@dimen/dp_16"
             android:background="@drawable/bg_btn_corner"
-            android:text="@string/send"
+            android:text="@string/refresh"
             android:textSize="14sp" />
     </LinearLayout>
 
