@@ -70,8 +70,9 @@ class NetConnection {
             val path = Environment.getExternalStorageDirectory().absolutePath + File.separator + FOLDER_NAME + File.separator + fileInfo.fileName
             val file = File(path)
             file.createNewFile()
+            var fos: FileOutputStream? = null
             try {
-                val fos = file.outputStream()
+                fos = file.outputStream()
                 val bytes = ByteArray(2048)
                 var revLength = 0
                 var read = mInputStream!!.read(bytes)
@@ -86,10 +87,12 @@ class NetConnection {
                     fos.flush()
                     read = mInputStream!!.read(bytes)
                 }
-                fos.flush()
             } catch (e: Exception) {
                 Log.e("tag", e.message)
                 handler.sendEmptyMessage(Command.STATE_DISCONNECT)
+            } finally {
+                fos?.flush()
+                fos?.close()
             }
         }
     }

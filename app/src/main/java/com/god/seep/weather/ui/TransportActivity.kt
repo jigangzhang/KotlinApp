@@ -70,7 +70,7 @@ class TransportActivity : AppCompatActivity() {
                     what = Command.GET_FILE
                     obj = item
                 }
-                threadHandler?.sendMessage(message)
+                val isOK = threadHandler?.sendMessage(message)
             }
         }
         fileList.adapter = mAdapter
