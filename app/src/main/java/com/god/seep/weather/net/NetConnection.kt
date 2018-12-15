@@ -12,7 +12,7 @@ import kotlin.Exception
 
 class NetConnection {
     companion object {
-        val FOLDER_NAME = "shared"
+        const val FOLDER_NAME = "shared"
     }
 
     private val host: String = "10.0.0.5"
@@ -72,24 +72,35 @@ class NetConnection {
             file.createNewFile()
             var fos: FileOutputStream? = null
             try {
-                fos = file.outputStream()
-                val bytes = ByteArray(2048)
-                var revLength = 0
+                fos = FileOutputStream(file)
+                var bytes = ByteArray(2048)
+                var revLength = 0.0
                 var read = mInputStream!!.read(bytes)
+                var percent = 0
+                //此处可能是死循环
                 while (read != -1) {
-                    revLength += bytes.size
-                    val message = Message()
-                    message.arg1 = ((revLength / fileInfo.fileSize) * 100).toInt()
-                    message.obj = fileInfo.fileName
-                    message.what = Command.PROGRESS
-                    handler.sendMessage(message)
+                    revLength += read
                     fos.write(bytes, 0, read)
-                    fos.flush()
+                    val p = ((revLength / fileInfo.fileSize) * 100).toInt()
+                    if (p > percent) {
+                        percent = p
+                        val message = Message()
+                        message.arg1 = percent
+                        message.obj = fileInfo.fileName
+                        message.what = Command.PROGRESS
+                        handler.sendMessage(message)
+                    }
+                    if (revLength.compareTo(fileInfo.fileSize) == 0)
+                        break
                     read = mInputStream!!.read(bytes)
                 }
+//                fos.flush()
             } catch (e: Exception) {
                 Log.e("tag", e.message)
                 handler.sendEmptyMessage(Command.STATE_DISCONNECT)
+            } catch (e: IOException) {
+                Log.e("tag", "IO exception-->${e.message}")
+
             } finally {
                 fos?.flush()
                 fos?.close()

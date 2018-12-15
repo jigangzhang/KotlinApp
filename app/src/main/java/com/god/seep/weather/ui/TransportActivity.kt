@@ -39,6 +39,7 @@ class TransportActivity : AppCompatActivity() {
                         mAdapter?.newData = data
                     else
                         toast(error)
+                    process.text = null
                 }
                 Command.PROGRESS -> {
                     if (msg.arg1 == 100)
