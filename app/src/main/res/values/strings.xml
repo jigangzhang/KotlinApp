@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Weather App</string>
+    <string name="app_name">Transport</string>
     <string name="action_settings">Settings</string>
     <string name="section_format">Hello World from section: %1$d</string>
 
@@ -8,10 +8,13 @@
     <string name="connected">已连接</string>
     <string name="disconnect">未连接</string>
     <string name="connecting">连接中</string>
+    <string name="connect">连接</string>
     <string name="send">发送</string>
     <string name="refresh">刷新</string>
     <string name="file_list">文件列表</string>
+    <string name="file_transport">文件传输</string>
 
     <string name="hint_message">请输入信息</string>
+    <string name="hint_ip_address">请输入IP地址</string>
     <string name="unit_byte">B</string>
 </resources>

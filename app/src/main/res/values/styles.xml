@@ -1,7 +1,7 @@
 <resources>
 
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
@@ -15,6 +15,16 @@
 
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
-    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light">
+        <item name="actionOverflowMenuStyle">@style/MenuStyle</item>
+    </style>
+
+    <style name="MenuStyle">
+        <item name="overlapAnchor">false</item>
+        <item name="android:popupBackground">@color/colorAccent</item>
+        <item name="android:textColor">@color/black_text</item>
+        <item name="android:dropDownHorizontalOffset">-2dp</item>
+        <item name="android:dropDownVerticalOffset">2dp</item>
+    </style>
 
 </resources>

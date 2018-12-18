@@ -2,11 +2,12 @@ package com.god.seep.weather.ui
 
 import android.annotation.SuppressLint
 import android.os.*
+import android.text.TextUtils
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
-import androidx.recyclerview.widget.DividerItemDecoration
 import com.god.seep.weather.R
 import com.god.seep.weather.adapter.FileListAdapter
-import com.god.seep.weather.adapter.OnItemClickListener
+import com.god.seep.weather.adapter.FilePageAdapter
 import com.god.seep.weather.entity.Entity
 import com.god.seep.weather.entity.FileInfo
 import com.god.seep.weather.extentions.toast
@@ -31,7 +32,10 @@ class TransportActivity : AppCompatActivity() {
             super.handleMessage(msg)
             when (msg?.what) {
                 Command.STATE_CONNECTED -> state_show.text = getString(R.string.connected)
-                Command.STATE_DISCONNECT -> state_show.text = getString(R.string.disconnect)
+                Command.STATE_DISCONNECT -> {
+                    input.visibility = View.VISIBLE
+                    state_show.text = getString(R.string.disconnect)
+                }
                 Command.STATE_CONNECTING -> state_show.text = getString(R.string.connecting)
                 Command.SHOW_FILE_LIST -> {
                     val (success, data, error) = msg.obj as Entity<ArrayList<FileInfo>>
@@ -42,9 +46,11 @@ class TransportActivity : AppCompatActivity() {
                     process.text = null
                 }
                 Command.PROGRESS -> {
-                    if (msg.arg1 == 100)
+                    process.visibility = View.VISIBLE
+                    if (msg.arg1 == 100) {
                         process.text = "${msg.obj}已接收"
-                    else
+                        process.visibility = View.GONE
+                    } else
                         process.text = "进度：${msg.arg1}%"
 
                 }
@@ -55,26 +61,16 @@ class TransportActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_transport)
+        toolbar.title = ""
+        setSupportActionBar(toolbar)
+        toolbar.setNavigationOnClickListener { finish() }
+        process.visibility = View.GONE
         initData()
-        thread = HThread("transport_thread")
-        thread?.start()
     }
 
     private fun initData() {
-        fileList.addItemDecoration(DividerItemDecoration(this, DividerItemDecoration.VERTICAL))
-        mAdapter = FileListAdapter()
-        mAdapter?.itemClickListener = object : OnItemClickListener {
-            override fun onItemClick(item: FileInfo, position: Int) {
-                toast(item.fileName)
-                val message = Message()
-                message.run {
-                    what = Command.GET_FILE
-                    obj = item
-                }
-                val isOK = threadHandler?.sendMessage(message)
-            }
-        }
-        fileList.adapter = mAdapter
+        val pageAdapter = FilePageAdapter(threadHandler)
+        fileViewPager.adapter = pageAdapter
         btn_send.setOnClickListener {
             val msg = Message.obtain()
             msg.run {
@@ -83,6 +79,16 @@ class TransportActivity : AppCompatActivity() {
             }
             threadHandler?.sendMessage(msg)
         }
+        btn_connect.setOnClickListener {
+            val ip = ip_address.text.toString()
+            if (TextUtils.isEmpty(ip))
+                toast("请输入服务端IP地址")
+            else {
+                input.visibility = View.GONE
+                thread = HThread(ip)
+                thread?.start()
+            }
+        }
     }
 
     override fun onDestroy() {
@@ -90,11 +96,13 @@ class TransportActivity : AppCompatActivity() {
         super.onDestroy()
     }
 
-    inner class HThread(threadName: String) : HandlerThread(threadName) {
+    inner class HThread(ip: String) : HandlerThread("transport_thread") {
         private var connection: NetConnection? = null
+        private var address = ip
 
         override fun onLooperPrepared() {
-            connection = NetConnection()
+            mainHandler.sendEmptyMessage(Command.STATE_CONNECTING)
+            connection = NetConnection(address)
             if (connection!!.isConnected())
                 mainHandler.sendEmptyMessage(Command.STATE_CONNECTED)
             else

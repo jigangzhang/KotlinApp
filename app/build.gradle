@@ -6,6 +6,16 @@ apply plugin: 'androidx.navigation.safeargs'
 android {
     compileSdkVersion 28
 
+    defaultConfig {
+        applicationId "com.god.seep.weather"
+        minSdkVersion 18
+        targetSdkVersion 28
+        versionCode 1
+        versionName "0.0.1"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        flavorDimensions ""
+    }
+
     def prop = new Properties()
     def dis = project.rootProject.file('local.properties').newDataInputStream()
     prop.load(dis)
@@ -39,24 +49,30 @@ android {
     /**
      * 多渠道包
      */
-    flavorDimensions ""
     productFlavors {
         pro {
-            applicationId "com.god.seep.weather"
-            minSdkVersion 18
-            targetSdkVersion 28
-            versionCode 1
-            versionName "0.0.1"
-            testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+            dimension ""
+            buildConfigField "String", "environment", '"pro"'
         }
         dev {
-            applicationId "com.god.seep.weather"
-            minSdkVersion 18
-            targetSdkVersion 28
-            versionCode 1
-            versionName "0.0.1"
-            testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+            dimension ""
+            buildConfigField "String", "environment", '"dev"'
         }
+        vip {
+            dimension ""
+        }
+        free {
+            dimension ""
+        }
+    }
+
+    //配置打包输出名称
+    applicationVariants.all {
+        variant ->
+            variant.outputs.all {
+                outputFileName = "Transfer_${defaultConfig.versionName}" +
+                        "_${variant.productFlavors[0].name}_${buildType.name}.apk"
+            }
     }
 }
 

@@ -1,5 +1,6 @@
 package com.god.seep.weather.ui
 
+import android.Manifest
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -12,6 +13,7 @@ import com.god.seep.weather.R
 import com.god.seep.weather.entity.Request
 import com.god.seep.weather.extentions.toast
 import com.google.android.material.snackbar.Snackbar
+import com.tbruyelle.rxpermissions2.RxPermissions
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
@@ -47,6 +49,15 @@ class MainActivity : AppCompatActivity() {
                         }).start()
                     }.show()
         }
+
+        RxPermissions(this)
+                .requestEach(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE)
+                .subscribe {
+                    if (!it.granted) {
+                        toast("请授予存储权限")
+                    }
+                }
+                .isDisposed
 
     }
 

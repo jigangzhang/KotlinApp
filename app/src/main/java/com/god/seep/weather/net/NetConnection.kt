@@ -10,12 +10,12 @@ import java.net.InetSocketAddress
 import java.net.Socket
 import kotlin.Exception
 
-class NetConnection {
+class NetConnection(ip_address: String) {
     companion object {
         const val FOLDER_NAME = "shared"
     }
 
-    private val host: String = "10.0.0.5"
+    private val host: String = ip_address
     private val port: Int = 9999
     private var socket: Socket? = null
     private var mInputStream: InputStream? = null
@@ -94,13 +94,11 @@ class NetConnection {
                         break
                     read = mInputStream!!.read(bytes)
                 }
-//                fos.flush()
             } catch (e: Exception) {
-                Log.e("tag", e.message)
+                Log.e("tag", "e-->${e.message}")
                 handler.sendEmptyMessage(Command.STATE_DISCONNECT)
             } catch (e: IOException) {
                 Log.e("tag", "IO exception-->${e.message}")
-
             } finally {
                 fos?.flush()
                 fos?.close()
