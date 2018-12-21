@@ -50,7 +50,7 @@
     一、框架引用：
         MVVM框架：DataBinding（数据绑定）、LifeCycle（生命周期）、LiveData/RxJava（数据）、
         ViewModel、Room（数据库）、Paging（分页）  、WorkManager（工作排程）、Glide（图像）、
-        Retrofit（HTTP）、EasyPermission（权限） ...
+        Retrofit（HTTP）、RxPermission（权限） ...
 
     二、网络封装：
         Retrofit CallAdapter.Factory封装：

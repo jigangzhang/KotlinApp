@@ -69,7 +69,7 @@ class TransportActivity : AppCompatActivity() {
     }
 
     private fun initData() {
-        val pageAdapter = FilePageAdapter(threadHandler)
+        val pageAdapter = FilePageAdapter(threadHandler, supportFragmentManager)
         fileViewPager.adapter = pageAdapter
         btn_send.setOnClickListener {
             val msg = Message.obtain()
