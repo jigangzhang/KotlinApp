@@ -67,8 +67,7 @@ class NetConnection(ip_address: String) {
             val folder = File(Environment.getExternalStorageDirectory().absolutePath + File.separator + FOLDER_NAME)
             if (!folder.exists())
                 folder.mkdirs()
-            val path = Environment.getExternalStorageDirectory().absolutePath + File.separator + FOLDER_NAME + File.separator + fileInfo.fileName
-            val file = File(path)
+            val file = File(folder, fileInfo.fileName)
             file.createNewFile()
             var fos: FileOutputStream? = null
             try {

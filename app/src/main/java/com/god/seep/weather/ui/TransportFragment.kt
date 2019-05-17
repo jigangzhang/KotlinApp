@@ -1,5 +1,6 @@
 package com.god.seep.weather.ui
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Bundle
 import android.os.Environment
@@ -14,6 +15,7 @@ import com.god.seep.weather.adapter.OnItemClickListener
 import com.god.seep.weather.entity.FileInfo
 import com.god.seep.weather.extentions.toast
 import com.god.seep.weather.net.NetConnection
+import io.reactivex.Observable
 import kotlinx.android.synthetic.main.pager_file_list.view.*
 import java.io.File
 
@@ -21,12 +23,13 @@ class TransportFragment : Fragment() {
     private lateinit var mContext: Context
     private lateinit var mRootView: View
     private var mType: Int = FILE_TYPE_REMOTE
-    var mListener: TransportListener? = null
+    private var mListener: TransportListener? = null
 
-    override fun onAttach(context: Context?) {
+    private var generator: Observable<List<FileInfo>>? = null
+
+    override fun onAttach(context: Context) {
         super.onAttach(context)
-        if (context != null)
-            mContext = context
+        mContext = context
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,25 +42,44 @@ class TransportFragment : Fragment() {
         return mRootView
     }
 
+    @SuppressLint("CheckResult")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         mRootView.fileList.addItemDecoration(DividerItemDecoration(mContext, DividerItemDecoration.VERTICAL))
         val adapter = FileListAdapter()
         adapter.itemClickListener = object : OnItemClickListener {
             override fun onItemClick(item: FileInfo, position: Int) {
                 mContext.toast(item.fileName)
-                mListener?.remote(item)
+                mListener?.fetchRemote(item)
             }
         }
         view.fileList.adapter = adapter
         if (mType == FILE_TYPE_REMOTE) {
-        } else {
-            val folder = File(Environment.getExternalStorageDirectory().absolutePath + File.separator + NetConnection.FOLDER_NAME)
-            if (folder.exists() && folder.isDirectory) {
-                val list = folder.listFiles()
-                        .map { FileInfo(it.name, it.length(), it.lastModified(), false, true) }
+            generator?.subscribe { list ->
                 adapter.newData = list
+                mRootView.refresh.isRefreshing = false
             }
+            mRootView.refresh.setOnRefreshListener {
+                val result = mListener?.fetchFileList()
+                if (result == null) {
+                    mContext.toast("请检查连接是否已建立")
+                    mRootView.refresh.isRefreshing = false
+                }
+            }
+        } else {
+            adapter.newData = getFiles()
+            mRootView.refresh.setOnRefreshListener { adapter.newData = getFiles() }
         }
+    }
+
+    private fun getFiles(): List<FileInfo> {
+        val folder = File(Environment.getExternalStorageDirectory().absolutePath + File.separator + NetConnection.FOLDER_NAME)
+        if (folder.exists() && folder.isDirectory) {
+            val list = folder.listFiles()
+                    .map { FileInfo(it.name, it.length(), it.lastModified(), false, true) }
+            mRootView.refresh.isRefreshing = false
+            return list
+        }
+        return emptyList()
     }
 
     companion object {
@@ -65,8 +87,10 @@ class TransportFragment : Fragment() {
         const val FILE_TYPE_LOCAL = 0x01
         const val FILE_TYPE_REMOTE = 0x02
 
-        fun newInstance(type: Int): Fragment {
+        fun newInstance(type: Int, generator: Observable<List<FileInfo>>, listener: TransportListener): Fragment {
             val fragment = TransportFragment()
+            fragment.generator = generator
+            fragment.mListener = listener
             val bundle = Bundle()
             bundle.putInt(TYPE_FILE, type)
             fragment.arguments = bundle
@@ -76,5 +100,7 @@ class TransportFragment : Fragment() {
 }
 
 interface TransportListener {
-    fun remote(info: FileInfo)
+    fun fetchRemote(info: FileInfo): Boolean?
+
+    fun fetchFileList(): Boolean?
 }

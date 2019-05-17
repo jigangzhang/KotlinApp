@@ -1,9 +1,12 @@
 package com.god.seep.weather.util
 
+import android.app.Service
 import android.os.Environment
 import android.os.Handler
 import android.os.Message
 import android.util.Log
+import android.view.View
+import android.view.inputmethod.InputMethodManager
 import com.god.seep.weather.entity.Entity
 import com.god.seep.weather.entity.FileInfo
 import com.god.seep.weather.extentions.gson
@@ -42,4 +45,10 @@ fun receiveFile(connection: NetConnection?, handler: Handler, fileInfo: FileInfo
     connection?.writeCommand(Command.SEND_FILE + fileInfo.fileName)
     handler.sendEmptyMessage(Command.PROGRESS)
     connection?.saveFile(handler, fileInfo)
+}
+
+fun hideKeyboardIfNeed(view: View) {
+    val manager = view.context.getSystemService(Service.INPUT_METHOD_SERVICE) as InputMethodManager
+    if (manager.isActive)
+        manager.hideSoftInputFromWindow(view.windowToken, 0)
 }

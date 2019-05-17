@@ -1,20 +1,27 @@
 package com.god.seep.weather.ui
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.os.*
 import android.text.TextUtils
+import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import com.god.seep.weather.R
 import com.god.seep.weather.adapter.FileListAdapter
 import com.god.seep.weather.adapter.FilePageAdapter
+import com.god.seep.weather.dialog.ProgressDialog
 import com.god.seep.weather.entity.Entity
 import com.god.seep.weather.entity.FileInfo
 import com.god.seep.weather.extentions.toast
 import com.god.seep.weather.util.handleFileList
 import com.god.seep.weather.net.Command
 import com.god.seep.weather.net.NetConnection
+import com.god.seep.weather.util.hideKeyboardIfNeed
 import com.god.seep.weather.util.receiveFile
+import com.tbruyelle.rxpermissions2.RxPermissions
+import io.reactivex.*
+import io.reactivex.android.schedulers.AndroidSchedulers
 import kotlinx.android.synthetic.main.activity_transport.*
 
 /**
@@ -22,36 +29,43 @@ import kotlinx.android.synthetic.main.activity_transport.*
  * 消息  线程间交互
  */
 class TransportActivity : AppCompatActivity() {
-
-    private var mAdapter: FileListAdapter? = null
-    private var threadHandler: Handler? = null
-    private var thread: HandlerThread? = null
+    private var thread: HThread? = null
+    private var generetor: Observable<List<FileInfo>>? = null
+    private var emitter: ObservableEmitter<List<FileInfo>>? = null
+    private var progressDialog: ProgressDialog? = null
 
     private val mainHandler = @SuppressLint("HandlerLeak") object : Handler() {
         override fun handleMessage(msg: Message?) {
             super.handleMessage(msg)
             when (msg?.what) {
-                Command.STATE_CONNECTED -> state_show.text = getString(R.string.connected)
+
+                Command.STATE_CONNECTED -> {
+                    input.visibility = View.GONE
+                    hideKeyboardIfNeed(input)
+                    state_show.text = getString(R.string.connected)
+                }
+
                 Command.STATE_DISCONNECT -> {
                     input.visibility = View.VISIBLE
                     state_show.text = getString(R.string.disconnect)
                 }
+
                 Command.STATE_CONNECTING -> state_show.text = getString(R.string.connecting)
+
                 Command.SHOW_FILE_LIST -> {
                     val (success, data, error) = msg.obj as Entity<ArrayList<FileInfo>>
                     if (success)
-                        mAdapter?.newData = data
+                        emitter?.onNext(data)
                     else
                         toast(error)
-                    process.text = null
                 }
+
                 Command.PROGRESS -> {
-                    process.visibility = View.VISIBLE
-                    if (msg.arg1 == 100) {
-                        process.text = "${msg.obj}已接收"
-                        process.visibility = View.GONE
-                    } else
-                        process.text = "进度：${msg.arg1}%"
+                    if (progressDialog == null)
+                        progressDialog = ProgressDialog(this@TransportActivity, msg.obj.toString())
+                    if (msg.arg1 != 100 && !progressDialog!!.isShowing)
+                        progressDialog?.show()
+                    progressDialog?.percent = msg.arg1
 
                 }
             }
@@ -64,29 +78,27 @@ class TransportActivity : AppCompatActivity() {
         toolbar.title = ""
         setSupportActionBar(toolbar)
         toolbar.setNavigationOnClickListener { finish() }
-        process.visibility = View.GONE
         initData()
     }
 
     private fun initData() {
-        val pageAdapter = FilePageAdapter(threadHandler, supportFragmentManager)
+        RxPermissions(this)
+                .requestEach(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                .subscribe { if (!it.granted) toast("请授权--" + it.name) }
+                .isDisposed
+        generetor = Observable.create { emitter: ObservableEmitter<List<FileInfo>> -> this.emitter = emitter }
+                .subscribeOn(AndroidSchedulers.mainThread())
+                .observeOn(AndroidSchedulers.mainThread())
+        val pageAdapter = FilePageAdapter(generetor!!, supportFragmentManager)
         fileViewPager.adapter = pageAdapter
-        btn_send.setOnClickListener {
-            val msg = Message.obtain()
-            msg.run {
-                what = Command.GET_FILE_LIST
-                obj = message
-            }
-            threadHandler?.sendMessage(msg)
-        }
         btn_connect.setOnClickListener {
             val ip = ip_address.text.toString()
             if (TextUtils.isEmpty(ip))
                 toast("请输入服务端IP地址")
             else {
-                input.visibility = View.GONE
                 thread = HThread(ip)
                 thread?.start()
+                pageAdapter.hThread = thread!!
             }
         }
     }
@@ -96,9 +108,20 @@ class TransportActivity : AppCompatActivity() {
         super.onDestroy()
     }
 
+    inner class THandler(looper: Looper, var connection: NetConnection) : Handler(looper) {
+        override fun handleMessage(msg: Message?) {
+            Log.e("tag", "msg -- " + msg?.obj)
+            when (msg?.what) {
+                Command.GET_FILE_LIST -> handleFileList(connection, mainHandler)
+                Command.GET_FILE -> receiveFile(connection, mainHandler, msg.obj as FileInfo)
+            }
+        }
+    }
+
     inner class HThread(ip: String) : HandlerThread("transport_thread") {
         private var connection: NetConnection? = null
         private var address = ip
+        var tHandler: Handler? = null
 
         override fun onLooperPrepared() {
             mainHandler.sendEmptyMessage(Command.STATE_CONNECTING)
@@ -107,15 +130,7 @@ class TransportActivity : AppCompatActivity() {
                 mainHandler.sendEmptyMessage(Command.STATE_CONNECTED)
             else
                 mainHandler.sendEmptyMessage(Command.STATE_DISCONNECT)
-            threadHandler = object : Handler(looper) {
-                override fun handleMessage(msg: Message?) {
-                    super.handleMessage(msg)
-                    when (msg?.what) {
-                        Command.GET_FILE_LIST -> handleFileList(connection, mainHandler)
-                        Command.GET_FILE -> receiveFile(connection, mainHandler, msg.obj as FileInfo)
-                    }
-                }
-            }
+            tHandler = THandler(looper, connection!!)
         }
 
         override fun quitSafely(): Boolean {
