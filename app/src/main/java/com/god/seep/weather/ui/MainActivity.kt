@@ -69,7 +69,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val id = item.itemId
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_bar_root) {
             startActivity(Intent(this, TransportActivity::class.java))
             return true
         }

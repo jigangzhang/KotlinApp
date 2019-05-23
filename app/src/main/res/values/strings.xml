@@ -13,6 +13,8 @@
     <string name="refresh">刷新</string>
     <string name="file_list">文件列表</string>
     <string name="file_transport">文件传输</string>
+    <string name="other_user">其他用户</string>
+    <string name="file_upload">上传文件</string>
 
     <string name="hint_message">请输入信息</string>
     <string name="hint_ip_address">请输入IP地址</string>

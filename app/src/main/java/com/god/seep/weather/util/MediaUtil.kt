@@ -23,7 +23,7 @@ fun playNotification(context: Context) {
 fun playDing(context: Context) {
     val manager = context.getSystemService(Service.AUDIO_SERVICE) as AudioManager
     var shouldPlay = true
-    if (manager.ringerMode != AudioManager.RINGER_MODE_NORMAL)
+    if (manager.ringerMode != AudioManager.RINGER_MODE_NORMAL)//不播放，return
         shouldPlay = false
 
     val player = MediaPlayer()

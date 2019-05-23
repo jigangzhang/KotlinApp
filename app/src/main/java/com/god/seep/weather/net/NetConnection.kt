@@ -4,6 +4,7 @@ import android.os.Environment
 import android.os.Handler
 import android.os.Message
 import android.util.Log
+import com.god.seep.weather.dialog.ProgressDialog
 import com.god.seep.weather.entity.FileInfo
 import java.io.*
 import java.net.InetSocketAddress
@@ -20,6 +21,11 @@ class NetConnection(ip_address: String) {
     private var socket: Socket? = null
     private var mInputStream: InputStream? = null
     private var mOutputStream: OutputStream? = null
+        get() {
+            if (field == null && socket != null)
+                return socket?.getOutputStream()
+            return field
+        }
     private var reader: BufferedReader? = null
     private var writer: PrintWriter? = null
 
@@ -28,8 +34,8 @@ class NetConnection(ip_address: String) {
             socket = Socket(host, port)
             mInputStream = socket?.getInputStream()
             mOutputStream = socket?.getOutputStream()
-            reader = BufferedReader(InputStreamReader(mInputStream))
-            writer = PrintWriter(OutputStreamWriter(mOutputStream))
+            reader = BufferedReader(InputStreamReader(socket?.getInputStream()))
+            writer = PrintWriter(OutputStreamWriter(socket?.getOutputStream()))
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -76,7 +82,7 @@ class NetConnection(ip_address: String) {
                 var revLength = 0.0
                 var read = mInputStream!!.read(bytes)
                 var percent = 0
-                //此处可能是死循环
+                //此处可能是死循环，对文件时结束符返回-1，此处接收文件，不能以-1判断
                 while (read != -1) {
                     revLength += read
                     fos.write(bytes, 0, read)
@@ -85,6 +91,7 @@ class NetConnection(ip_address: String) {
                         percent = p
                         val message = Message()
                         message.arg1 = percent
+                        message.arg2 = ProgressDialog.TYPE_DOWNLOAD
                         message.obj = fileInfo.fileName
                         message.what = Command.PROGRESS
                         handler.sendMessage(message)
@@ -102,6 +109,44 @@ class NetConnection(ip_address: String) {
                 fos?.flush()
                 fos?.close()
             }
+        }
+    }
+
+    fun sendFile(handler: Handler, file: File) {
+        val bytes = ByteArray(2048)
+        val totalLength = file.length()
+        var sendLength = 0.0
+        var percent = 0
+        var fis: FileInputStream? = null
+        try {
+            fis = FileInputStream(file)
+            var read = fis.read(bytes)
+            while (read != -1) {
+                sendLength += read
+                mOutputStream?.write(bytes, 0, read)
+                val p = ((sendLength / totalLength) * 100).toInt()
+                if (p > percent) {
+                    percent = p
+                    val message = Message.obtain()
+                    message.run {
+                        arg1 = percent
+                        obj = file.name
+                        arg2 = ProgressDialog.TYPE_UPLOAD
+                        what = Command.PROGRESS
+                    }
+                    handler.sendMessage(message)
+                }
+//                if (sendLength >= totalLength)
+//                    break
+                read = fis.read(bytes)
+            }
+            Log.e("tag", "send finish")
+        } catch (e: Exception) {
+            Log.e("tag", "e --> ${e.message}")
+            //e 为 socket相关时 连接断开
+        } finally {
+            mOutputStream?.flush()
+            fis?.close()
         }
     }
 

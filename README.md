@@ -7,6 +7,23 @@
     5、内部类持有外部类引用--线程中有一个内部线程类(runnable)，两个线程共同持有一个对象的情况<br>
     6、第一次文件接收后，点击列表时后续 Message发送接收不到；
     7、mInputStream!!.read(bytes)循环最后一次时会阻塞
+    
+    client 功能：
+    文件上传与  下载；<done
+    查看连接的其它客户端；列表--IP等信息（单独一页）；<done>
+    下载与上传时弹框显示进度条，结束时 提示 ‘叮’；<done>
+    本地文件操作--删除、执行、进入文件夹等
+    
+    将连接转至 前台service 或者 开多进程--实现IPC 等
+    结束进程；
+    先实现功能 后期 优化 服务；
+    
+    读文件 结束符为 -1
+    
+    未解决问题：
+        高版本文件权限问题（>6.0）
+        uri识别问题：media、document、content、file 等
+        server端接收文件到一半时停止了
 
 ###### Server端：<br>
     一、订阅-发布模式实现：<br>
@@ -87,6 +104,7 @@
             生命周期敏感库：在横竖屏切换等 savedInstanceState的情况下不用处理处理
 
         4、Base封装：
+            列表页base封装；
             将数据请求页面相关的回调封装到DataBinding的ViewModel中？？？
             savedInstanceState，ViewModel不能处理的数据的处理
 

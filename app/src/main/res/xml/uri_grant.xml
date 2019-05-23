@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <paths>
+        <external-path
+            name="upload"
+            path="" />
+        <files-path
+            name="upload"
+            path="" />
+        <cache-path
+            name="upload"
+            path="" />
+        <root-path
+            name="upload"
+            path="" />
+    </paths>
+</resources>

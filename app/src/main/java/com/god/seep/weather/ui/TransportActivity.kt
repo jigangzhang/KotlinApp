@@ -2,23 +2,26 @@ package com.god.seep.weather.ui
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Intent
+import android.net.Uri
 import android.os.*
 import android.text.TextUtils
 import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import com.god.seep.weather.R
-import com.god.seep.weather.adapter.FileListAdapter
 import com.god.seep.weather.adapter.FilePageAdapter
 import com.god.seep.weather.dialog.ProgressDialog
 import com.god.seep.weather.entity.Entity
 import com.god.seep.weather.entity.FileInfo
 import com.god.seep.weather.extentions.toast
-import com.god.seep.weather.util.handleFileList
 import com.god.seep.weather.net.Command
 import com.god.seep.weather.net.NetConnection
-import com.god.seep.weather.util.hideKeyboardIfNeed
-import com.god.seep.weather.util.receiveFile
+import com.god.seep.weather.util.*
+import com.hwangjr.rxbus.RxBus
+import com.hwangjr.rxbus.annotation.Subscribe
 import com.tbruyelle.rxpermissions2.RxPermissions
 import io.reactivex.*
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -61,12 +64,13 @@ class TransportActivity : AppCompatActivity() {
                 }
 
                 Command.PROGRESS -> {
-                    if (progressDialog == null)
+                    if (progressDialog == null && msg.obj != null)
                         progressDialog = ProgressDialog(this@TransportActivity, msg.obj.toString())
+                    progressDialog?.fileName = msg.obj.toString()
+                    progressDialog?.type = msg.arg2
+                    progressDialog?.percent = msg.arg1
                     if (msg.arg1 != 100 && !progressDialog!!.isShowing)
                         progressDialog?.show()
-                    progressDialog?.percent = msg.arg1
-
                 }
             }
         }
@@ -79,6 +83,7 @@ class TransportActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         toolbar.setNavigationOnClickListener { finish() }
         initData()
+        RxBus.get().register(this)
     }
 
     private fun initData() {
@@ -103,17 +108,61 @@ class TransportActivity : AppCompatActivity() {
         }
     }
 
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_main, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
+        val id = item?.itemId
+        when (id) {
+            R.id.action_user -> {
+                val intent = Intent(this, UserActivity::class.java)
+                startActivity(intent)
+                return true
+            }
+            R.id.action_upload -> {
+                val intent = Intent(Intent.ACTION_GET_CONTENT)
+                intent.type = "*/*"
+                intent.addCategory(Intent.CATEGORY_OPENABLE)
+                startActivityForResult(intent, 0)
+            }
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 0 && data != null) {
+            val uri = data.data
+            val message = Message.obtain()
+            message.what = Command.UPLOAD_FILE
+            message.obj = uri
+            thread?.tHandler?.sendMessage(message)
+            Log.e("tag", "path --> ${uri?.path}")
+        }
+    }
+
     override fun onDestroy() {
         thread?.quitSafely()
         super.onDestroy()
+        RxBus.get().unregister(this)
+    }
+
+    @Subscribe
+    fun getAllUser(action: String) {
+        if (action == Command.ALL_USER)
+            thread?.tHandler?.sendEmptyMessage(Command.GET_ALL_USER)
     }
 
     inner class THandler(looper: Looper, var connection: NetConnection) : Handler(looper) {
         override fun handleMessage(msg: Message?) {
-            Log.e("tag", "msg -- " + msg?.obj)
+            Log.e("tag", "msg -- obj ${msg?.obj}  what -- ${msg?.what}")
             when (msg?.what) {
                 Command.GET_FILE_LIST -> handleFileList(connection, mainHandler)
                 Command.GET_FILE -> receiveFile(connection, mainHandler, msg.obj as FileInfo)
+                Command.GET_ALL_USER -> getAllUser(connection)
+                Command.UPLOAD_FILE -> sendFile(connection, mainHandler, msg.obj as Uri)
             }
         }
     }
