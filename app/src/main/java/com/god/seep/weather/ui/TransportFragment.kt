@@ -12,6 +12,8 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import com.god.seep.weather.R
 import com.god.seep.weather.adapter.FileListAdapter
 import com.god.seep.weather.adapter.OnItemClickListener
+import com.god.seep.weather.dialog.MenuDialog
+import com.god.seep.weather.dialog.NoticeDialog
 import com.god.seep.weather.entity.FileInfo
 import com.god.seep.weather.extentions.toast
 import com.god.seep.weather.net.NetConnection
@@ -22,6 +24,7 @@ import java.io.File
 class TransportFragment : Fragment() {
     private lateinit var mContext: Context
     private lateinit var mRootView: View
+    private lateinit var fileList: Array<File>
     private var mType: Int = FILE_TYPE_REMOTE
     private var mListener: TransportListener? = null
 
@@ -47,9 +50,21 @@ class TransportFragment : Fragment() {
         mRootView.fileList.addItemDecoration(DividerItemDecoration(mContext, DividerItemDecoration.VERTICAL))
         val adapter = FileListAdapter()
         adapter.itemClickListener = object : OnItemClickListener {
+            override fun onItemLongClick(item: FileInfo, position: Int): Boolean {
+                if (mType == FILE_TYPE_LOCAL) {
+                    MenuDialog(mContext, fileList[position]) {
+                        adapter.newData = getFiles()
+                    }.show()
+                    return true
+                }
+                return false
+            }
+
             override fun onItemClick(item: FileInfo, position: Int) {
-                mContext.toast(item.fileName)
-                mListener?.fetchRemote(item)
+                if (mType == FILE_TYPE_REMOTE)
+                    NoticeDialog(mContext, item.fileName) {
+                        mListener?.fetchRemote(item)
+                    }.show()
             }
         }
         view.fileList.adapter = adapter
@@ -74,8 +89,8 @@ class TransportFragment : Fragment() {
     private fun getFiles(): List<FileInfo> {
         val folder = File(Environment.getExternalStorageDirectory().absolutePath + File.separator + NetConnection.FOLDER_NAME)
         if (folder.exists() && folder.isDirectory) {
-            val list = folder.listFiles()
-                    .map { FileInfo(it.name, it.length(), it.lastModified(), false, true) }
+            fileList = folder.listFiles()
+            val list = fileList.map { FileInfo(it.name, it.length(), it.lastModified(), false, true) }
             mRootView.refresh.isRefreshing = false
             return list
         }

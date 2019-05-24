@@ -24,6 +24,10 @@ class FileListAdapter : RecyclerView.Adapter<ViewHolder>() {
         val holder = ViewHolder(view)
         holder.run {
             itemView.setOnClickListener { itemClickListener?.onItemClick(newData!![layoutPosition], layoutPosition) }
+            itemView.setOnLongClickListener {
+                return@setOnLongClickListener itemClickListener?.onItemLongClick(newData!![layoutPosition], layoutPosition)
+                        ?: false
+            }
         }
         return holder
     }
@@ -39,6 +43,7 @@ class FileListAdapter : RecyclerView.Adapter<ViewHolder>() {
 
 interface OnItemClickListener {
     fun onItemClick(item: FileInfo, position: Int)
+    fun onItemLongClick(item: FileInfo, position: Int): Boolean
 }
 
 class ViewHolder(var view: View) : RecyclerView.ViewHolder(view) {
