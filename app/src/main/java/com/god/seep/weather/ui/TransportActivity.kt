@@ -137,9 +137,8 @@ class TransportActivity : AppCompatActivity() {
             val uri = data.data
             val message = Message.obtain()
             message.what = Command.UPLOAD_FILE
-            message.obj = uri
+            message.obj = uri?.getRealPath(this)
             thread?.tHandler?.sendMessage(message)
-            Log.e("tag", "path --> ${uri?.path}")
         }
     }
 
@@ -162,7 +161,7 @@ class TransportActivity : AppCompatActivity() {
                 Command.GET_FILE_LIST -> handleFileList(connection, mainHandler)
                 Command.GET_FILE -> receiveFile(connection, mainHandler, msg.obj as FileInfo)
                 Command.GET_ALL_USER -> getAllUser(connection)
-                Command.UPLOAD_FILE -> sendFile(connection, mainHandler, msg.obj as Uri)
+                Command.UPLOAD_FILE -> sendFile(connection, mainHandler, msg.obj as String)
             }
         }
     }

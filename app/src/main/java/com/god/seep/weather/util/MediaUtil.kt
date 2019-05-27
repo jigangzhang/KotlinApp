@@ -78,8 +78,12 @@ fun Uri.getRealPath(context: Context): String? {
                         path = Environment.getExternalStorageDirectory().path + "/" + split[1]
                 } else if (this.isDownloadsDocument()) {
                     val documentId = DocumentsContract.getDocumentId(this)
-                    val contentUri = ContentUris.withAppendedId(Uri.parse("content://downloads/public_downloads"), documentId.toLong())
-                    path = getPathFromUri(context, contentUri, null, null)
+                    path = if (documentId.startsWith("raw:"))
+                        documentId.replace("raw:", "")
+                    else {
+                        val contentUri = ContentUris.withAppendedId(Uri.parse("content://downloads/public_downloads"), documentId.toLong())
+                        getPathFromUri(context, contentUri, null, null)
+                    }
                 } else if (this.isMediaDocument()) {
                     val split = DocumentsContract.getDocumentId(this).split(":")
                     val type = split[0]

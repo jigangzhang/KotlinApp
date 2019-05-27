@@ -88,13 +88,13 @@ class TransportFragment : Fragment() {
 
     private fun getFiles(): List<FileInfo> {
         val folder = File(Environment.getExternalStorageDirectory().absolutePath + File.separator + NetConnection.FOLDER_NAME)
+        var list = emptyList<FileInfo>()
         if (folder.exists() && folder.isDirectory) {
             fileList = folder.listFiles()
-            val list = fileList.map { FileInfo(it.name, it.length(), it.lastModified(), false, true) }
-            mRootView.refresh.isRefreshing = false
-            return list
+            list = fileList.map { FileInfo(it.name, it.length(), it.lastModified(), false, true) }
         }
-        return emptyList()
+        mRootView.refresh.isRefreshing = false
+        return list
     }
 
     companion object {

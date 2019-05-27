@@ -1,7 +1,6 @@
 package com.god.seep.weather.util
 
 import android.app.Service
-import android.net.Uri
 import android.os.Environment
 import android.os.Handler
 import android.os.Message
@@ -19,7 +18,6 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.hwangjr.rxbus.RxBus
 import java.io.File
-import java.io.FileOutputStream
 
 fun handleFileList(connection: NetConnection?, handler: Handler) {
     try {
@@ -55,8 +53,8 @@ fun receiveFile(connection: NetConnection?, handler: Handler, fileInfo: FileInfo
     connection?.saveFile(handler, fileInfo)
 }
 
-fun sendFile(connection: NetConnection?, handler: Handler, uri: Uri) {
-    val file = File(uri.path)
+fun sendFile(connection: NetConnection?, handler: Handler, path: String) {
+    val file = File(path)
     val message = Message()
     message.what = Command.PROGRESS
     message.obj = file.name
