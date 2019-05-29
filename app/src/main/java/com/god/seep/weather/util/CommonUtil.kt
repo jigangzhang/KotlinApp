@@ -19,7 +19,7 @@ import com.google.gson.reflect.TypeToken
 import com.hwangjr.rxbus.RxBus
 import java.io.File
 
-fun handleFileList(connection: NetConnection?, handler: Handler) {
+fun handleFileList(connection: NetConnection?, handler: Handler?) {
     try {
         connection?.writeCommand(Command.FILE_LIST)
         val data = connection?.readCommand()
@@ -28,14 +28,14 @@ fun handleFileList(connection: NetConnection?, handler: Handler) {
             what = Command.SHOW_FILE_LIST
             obj = data?.gson<List<FileInfo>>(object : TypeToken<Entity<List<FileInfo>>>() {}.type)
         }
-        handler.sendMessage(msg)
+        handler?.sendMessage(msg)
     } catch (e: Exception) {
         Log.e("tag", e.message)
-        handler.sendEmptyMessage(Command.STATE_DISCONNECT)
+        handler?.sendEmptyMessage(Command.STATE_DISCONNECT)
     }
 }
 
-fun receiveFile(connection: NetConnection?, handler: Handler, fileInfo: FileInfo) {
+fun receiveFile(connection: NetConnection?, handler: Handler?, fileInfo: FileInfo) {
     val path = Environment.getExternalStorageDirectory().absolutePath + File.separator + NetConnection.FOLDER_NAME + File.separator + fileInfo.fileName
     val file = File(path)
     val message = Message()
@@ -44,23 +44,23 @@ fun receiveFile(connection: NetConnection?, handler: Handler, fileInfo: FileInfo
     message.arg2 = ProgressDialog.TYPE_DOWNLOAD
     if (file.exists()) {
         message.arg1 = 100
-        handler.sendMessage(message)
+        handler?.sendMessage(message)
         return
     }
     connection?.writeCommand(Command.SEND_FILE + fileInfo.fileName)
     message.arg1 = 0
-    handler.sendMessage(message)
+    handler?.sendMessage(message)
     connection?.saveFile(handler, fileInfo)
 }
 
-fun sendFile(connection: NetConnection?, handler: Handler, path: String) {
+fun sendFile(connection: NetConnection?, handler: Handler?, path: String) {
     val file = File(path)
     val message = Message()
     message.what = Command.PROGRESS
     message.obj = file.name
     message.arg1 = 0
     message.arg2 = ProgressDialog.TYPE_UPLOAD
-    handler.sendMessage(message)
+    handler?.sendMessage(message)
     val info = FileInfo(file.name, file.length(), file.lastModified(), downloading = false, downloaded = true)
     val json = Gson().toJson(info)
     connection?.writeCommand(Command.REV_FILE + json)

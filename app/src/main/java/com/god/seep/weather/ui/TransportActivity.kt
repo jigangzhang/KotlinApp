@@ -2,8 +2,10 @@ package com.god.seep.weather.ui
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
-import android.net.Uri
+import android.content.ServiceConnection
 import android.os.*
 import android.text.TextUtils
 import android.util.Log
@@ -18,10 +20,7 @@ import com.god.seep.weather.entity.Entity
 import com.god.seep.weather.entity.FileInfo
 import com.god.seep.weather.extentions.toast
 import com.god.seep.weather.net.Command
-import com.god.seep.weather.net.NetConnection
 import com.god.seep.weather.util.*
-import com.hwangjr.rxbus.RxBus
-import com.hwangjr.rxbus.annotation.Subscribe
 import com.tbruyelle.rxpermissions2.RxPermissions
 import io.reactivex.*
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -32,10 +31,11 @@ import kotlinx.android.synthetic.main.activity_transport.*
  * 消息  线程间交互
  */
 class TransportActivity : AppCompatActivity() {
-    private var thread: HThread? = null
+    private lateinit var pageAdapter: FilePageAdapter
     private var generetor: Observable<List<FileInfo>>? = null
     private var emitter: ObservableEmitter<List<FileInfo>>? = null
     private var progressDialog: ProgressDialog? = null
+    private var mService: TransportService? = null
 
     private val mainHandler = @SuppressLint("HandlerLeak") object : Handler() {
         override fun handleMessage(msg: Message?) {
@@ -83,7 +83,20 @@ class TransportActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         toolbar.setNavigationOnClickListener { finish() }
         initData()
-        RxBus.get().register(this)
+    }
+
+    var conn = object : ServiceConnection {
+        override fun onServiceDisconnected(name: ComponentName?) {
+            Log.e("tag", "binder -- onServiceDisconnected -- ${name?.className}")
+        }
+
+        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+            Log.e("tag", "binder -- onServiceConnected -- ${name?.className}")
+            mService = (service as TransportService.TransportBinder).getService()
+            pageAdapter.hService = mService
+            mService?.mainHandler = this@TransportActivity.mainHandler
+            mService?.connect(ip_address.text.toString())
+        }
     }
 
     private fun initData() {
@@ -94,16 +107,17 @@ class TransportActivity : AppCompatActivity() {
         generetor = Observable.create { emitter: ObservableEmitter<List<FileInfo>> -> this.emitter = emitter }
                 .subscribeOn(AndroidSchedulers.mainThread())
                 .observeOn(AndroidSchedulers.mainThread())
-        val pageAdapter = FilePageAdapter(generetor!!, supportFragmentManager)
+        pageAdapter = FilePageAdapter(generetor!!, supportFragmentManager)
         fileViewPager.adapter = pageAdapter
         btn_connect.setOnClickListener {
             val ip = ip_address.text.toString()
             if (TextUtils.isEmpty(ip))
                 toast("请输入服务端IP地址")
             else {
-                thread = HThread(ip)
-                thread?.start()
-                pageAdapter.hThread = thread!!
+                if (mService == null)
+                    bindService(Intent(this, TransportService::class.java), conn, Context.BIND_AUTO_CREATE)
+                else
+                    mService?.connect(ip)
             }
         }
     }
@@ -138,52 +152,13 @@ class TransportActivity : AppCompatActivity() {
             val message = Message.obtain()
             message.what = Command.UPLOAD_FILE
             message.obj = uri?.getRealPath(this)
-            thread?.tHandler?.sendMessage(message)
+            mService?.sendMessage(message)
         }
     }
 
     override fun onDestroy() {
-        thread?.quitSafely()
         super.onDestroy()
-        RxBus.get().unregister(this)
-    }
-
-    @Subscribe
-    fun getAllUser(action: String) {
-        if (action == Command.ALL_USER)
-            thread?.tHandler?.sendEmptyMessage(Command.GET_ALL_USER)
-    }
-
-    inner class THandler(looper: Looper, var connection: NetConnection) : Handler(looper) {
-        override fun handleMessage(msg: Message?) {
-            Log.e("tag", "msg -- obj ${msg?.obj}  what -- ${msg?.what}")
-            when (msg?.what) {
-                Command.GET_FILE_LIST -> handleFileList(connection, mainHandler)
-                Command.GET_FILE -> receiveFile(connection, mainHandler, msg.obj as FileInfo)
-                Command.GET_ALL_USER -> getAllUser(connection)
-                Command.UPLOAD_FILE -> sendFile(connection, mainHandler, msg.obj as String)
-            }
-        }
-    }
-
-    inner class HThread(ip: String) : HandlerThread("transport_thread") {
-        private var connection: NetConnection? = null
-        private var address = ip
-        var tHandler: Handler? = null
-
-        override fun onLooperPrepared() {
-            mainHandler.sendEmptyMessage(Command.STATE_CONNECTING)
-            connection = NetConnection(address)
-            if (connection!!.isConnected())
-                mainHandler.sendEmptyMessage(Command.STATE_CONNECTED)
-            else
-                mainHandler.sendEmptyMessage(Command.STATE_DISCONNECT)
-            tHandler = THandler(looper, connection!!)
-        }
-
-        override fun quitSafely(): Boolean {
-            connection?.close()
-            return super.quitSafely()
-        }
+        unbindService(conn)
+//        stopService(Intent(this, TransportService::class.java))
     }
 }

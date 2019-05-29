@@ -32,6 +32,7 @@ class NetConnection(ip_address: String) {
     init {
         try {
             socket = Socket(host, port)
+            socket?.soTimeout = 5000
             mInputStream = socket?.getInputStream()
             mOutputStream = socket?.getOutputStream()
             reader = BufferedReader(InputStreamReader(socket?.getInputStream()))
@@ -68,7 +69,7 @@ class NetConnection(ip_address: String) {
         mOutputStream?.flush()
     }
 
-    fun saveFile(handler: Handler, fileInfo: FileInfo) {
+    fun saveFile(handler: Handler?, fileInfo: FileInfo) {
         if (mInputStream != null) {
             val folder = File(Environment.getExternalStorageDirectory().absolutePath + File.separator + FOLDER_NAME)
             if (!folder.exists())
@@ -94,7 +95,7 @@ class NetConnection(ip_address: String) {
                         message.arg2 = ProgressDialog.TYPE_DOWNLOAD
                         message.obj = fileInfo.fileName
                         message.what = Command.PROGRESS
-                        handler.sendMessage(message)
+                        handler?.sendMessage(message)
                     }
                     if (revLength.compareTo(fileInfo.fileSize) == 0)
                         break
@@ -102,7 +103,7 @@ class NetConnection(ip_address: String) {
                 }
             } catch (e: Exception) {
                 Log.e("tag", "e-->${e.message}")
-                handler.sendEmptyMessage(Command.STATE_DISCONNECT)
+                handler?.sendEmptyMessage(Command.STATE_DISCONNECT)
             } catch (e: IOException) {
                 Log.e("tag", "IO exception-->${e.message}")
             } finally {
@@ -112,7 +113,7 @@ class NetConnection(ip_address: String) {
         }
     }
 
-    fun sendFile(handler: Handler, file: File) {
+    fun sendFile(handler: Handler?, file: File) {
         val bytes = ByteArray(2048)
         val totalLength = file.length()
         var sendLength = 0.0
@@ -134,7 +135,7 @@ class NetConnection(ip_address: String) {
                         arg2 = ProgressDialog.TYPE_UPLOAD
                         what = Command.PROGRESS
                     }
-                    handler.sendMessage(message)
+                    handler?.sendMessage(message)
                 }
 //                if (sendLength >= totalLength)
 //                    break

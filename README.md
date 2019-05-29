@@ -7,6 +7,7 @@
     5、内部类持有外部类引用--线程中有一个内部线程类(runnable)，两个线程共同持有一个对象的情况<br>
     6、第一次文件接收后，点击列表时后续 Message发送接收不到；
     7、mInputStream!!.read(bytes)循环最后一次时会阻塞
+    8、socket是单通道吗？socket能实现同时下载多个文件吗？
     
     client 功能：
     文件上传与  下载；<done
@@ -15,6 +16,8 @@
     本地文件操作--删除、执行、进入文件夹等<done>
     
     将连接转至 前台service 或者 开多进程--实现IPC 等
+        多进程使用 AIDL 或者 Messenger实现通信
+        本地使用 binder 返回 Service实例调用service方法，service通过回调接口返回结果<done
     结束进程；
     先实现功能 后期 优化 服务；
     
