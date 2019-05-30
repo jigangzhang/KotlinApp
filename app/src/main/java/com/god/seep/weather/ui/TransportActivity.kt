@@ -15,9 +15,9 @@ import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import com.god.seep.weather.R
 import com.god.seep.weather.adapter.FilePageAdapter
+import com.god.seep.weather.aidl.FileInfo
 import com.god.seep.weather.dialog.ProgressDialog
 import com.god.seep.weather.entity.Entity
-import com.god.seep.weather.entity.FileInfo
 import com.god.seep.weather.extentions.toast
 import com.god.seep.weather.net.Command
 import com.god.seep.weather.util.*
@@ -85,14 +85,31 @@ class TransportActivity : AppCompatActivity() {
         initData()
     }
 
+    var death = IBinder.DeathRecipient {
+        Log.e("tag", "binder -- linkToDeath -- binderDied")
+//        mService.asBinder.unlinkToDeath(this, 0)
+        bindService(
+                Intent(this@TransportActivity, TransportService::class.java),
+                this@TransportActivity.conn,
+                Context.BIND_AUTO_CREATE
+        )
+    }
     var conn = object : ServiceConnection {
         override fun onServiceDisconnected(name: ComponentName?) {
             Log.e("tag", "binder -- onServiceDisconnected -- ${name?.className}")
         }
 
+        override fun onBindingDied(name: ComponentName?) {
+            Log.e("tag", "binder -- onBindingDied -- ${name?.className}")
+        }
+
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             Log.e("tag", "binder -- onServiceConnected -- ${name?.className}")
             mService = (service as TransportService.TransportBinder).getService()
+            service.linkToDeath(
+                    this@TransportActivity.death,
+                    0
+            )
             pageAdapter.hService = mService
             mService?.mainHandler = this@TransportActivity.mainHandler
             mService?.connect(ip_address.text.toString())
