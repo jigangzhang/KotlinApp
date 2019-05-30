@@ -85,16 +85,7 @@ class TransportActivity : AppCompatActivity() {
         initData()
     }
 
-    var death = IBinder.DeathRecipient {
-        Log.e("tag", "binder -- linkToDeath -- binderDied")
-//        mService.asBinder.unlinkToDeath(this, 0)
-        bindService(
-                Intent(this@TransportActivity, TransportService::class.java),
-                this@TransportActivity.conn,
-                Context.BIND_AUTO_CREATE
-        )
-    }
-    var conn = object : ServiceConnection {
+    var conn: ServiceConnection = object : ServiceConnection {
         override fun onServiceDisconnected(name: ComponentName?) {
             Log.e("tag", "binder -- onServiceDisconnected -- ${name?.className}")
         }
@@ -106,14 +97,21 @@ class TransportActivity : AppCompatActivity() {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             Log.e("tag", "binder -- onServiceConnected -- ${name?.className}")
             mService = (service as TransportService.TransportBinder).getService()
-            service.linkToDeath(
-                    this@TransportActivity.death,
-                    0
-            )
+            service.linkToDeath(death, 0)
             pageAdapter.hService = mService
             mService?.mainHandler = this@TransportActivity.mainHandler
             mService?.connect(ip_address.text.toString())
         }
+    }
+
+    var death = IBinder.DeathRecipient {
+        Log.e("tag", "binder -- linkToDeath -- binderDied")
+//        mService.asBinder.unlinkToDeath(this, 0)
+        bindService(
+                Intent(this@TransportActivity, TransportService::class.java),
+                conn,
+                Context.BIND_AUTO_CREATE
+        )
     }
 
     private fun initData() {
