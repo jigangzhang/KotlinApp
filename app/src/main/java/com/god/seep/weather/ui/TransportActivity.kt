@@ -27,6 +27,7 @@ import com.tbruyelle.rxpermissions2.RxPermissions
 import io.reactivex.*
 import io.reactivex.android.schedulers.AndroidSchedulers
 import kotlinx.android.synthetic.main.activity_transport.*
+import kotlin.system.exitProcess
 
 /**
  * 文件  C <--> S (相互传)
@@ -191,8 +192,12 @@ class TransportActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        Runtime.getRuntime().addShutdownHook(Thread {
+            Log.e("tag", "hook vm exit")
+        })
         super.onDestroy()
         unbindService(conn)
-//        stopService(Intent(this, TransportService::class.java))
+        exit(this)
+//        stopService(Intent(this, RemoteTransportService::class.java))
     }
 }
