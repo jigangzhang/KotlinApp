@@ -5,7 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.god.seep.weather.R
-import com.god.seep.weather.entity.UserInfo
+import com.god.seep.weather.aidl.UserInfo
 import kotlinx.android.synthetic.main.item_user_info.view.*
 
 

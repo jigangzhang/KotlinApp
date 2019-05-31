@@ -16,7 +16,7 @@
     本地文件操作--删除、执行、进入文件夹等<done>
     
     将连接转至 前台service 或者 开多进程--实现IPC 等
-        多进程使用 AIDL 或者 Messenger实现通信
+        多进程使用 AIDL 或者 Messenger实现通信<done
         本地使用 binder 返回 Service实例调用service方法，service通过回调接口返回结果<done
     结束进程；
     先实现功能 后期 优化 服务；
@@ -27,6 +27,7 @@
         高版本文件权限问题（>6.0）<done
         uri识别问题：media、document、content、file 等, content//.../raw:/...奔溃<done>
         server端接收文件到一半时停止了<
+        多进程服务端以外断开后的重连、界面处理等
 
 ###### Server端：<br>
     一、订阅-发布模式实现：<br>

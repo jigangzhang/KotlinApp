@@ -4,8 +4,9 @@ import android.os.Environment
 import android.os.Handler
 import android.os.Message
 import android.util.Log
+import com.god.seep.weather.aidl.FileInfo
+import com.god.seep.weather.aidl.IStateListener
 import com.god.seep.weather.dialog.ProgressDialog
-import com.god.seep.weather.entity.FileInfo
 import java.io.*
 import java.net.InetSocketAddress
 import java.net.Socket
@@ -113,6 +114,45 @@ class NetConnection(ip_address: String) {
         }
     }
 
+    fun saveFile(listener: IStateListener?, fileInfo: FileInfo) {
+        if (mInputStream != null) {
+            val folder = File(Environment.getExternalStorageDirectory().absolutePath + File.separator + FOLDER_NAME)
+            if (!folder.exists())
+                folder.mkdirs()
+            val file = File(folder, fileInfo.fileName)
+            file.createNewFile()
+            var fos: FileOutputStream? = null
+            try {
+                fos = FileOutputStream(file)
+                var bytes = ByteArray(2048)
+                var revLength = 0.0
+                var read = mInputStream!!.read(bytes)
+                var percent = 0
+                //此处可能是死循环，对文件时结束符返回-1，此处接收文件，不能以-1判断
+                while (read != -1) {
+                    revLength += read
+                    fos.write(bytes, 0, read)
+                    val p = ((revLength / fileInfo.fileSize) * 100).toInt()
+                    if (p > percent) {
+                        percent = p
+                        listener?.onProgress(fileInfo.fileName, ProgressDialog.TYPE_DOWNLOAD, percent)
+                    }
+                    if (revLength.compareTo(fileInfo.fileSize) == 0)
+                        break
+                    read = mInputStream!!.read(bytes)
+                }
+            } catch (e: Exception) {
+                Log.e("tag", "e-->${e.message}")
+                listener?.onConnectState(Command.STATE_DISCONNECT)
+            } catch (e: IOException) {
+                Log.e("tag", "IO exception-->${e.message}")
+            } finally {
+                fos?.flush()
+                fos?.close()
+            }
+        }
+    }
+
     fun sendFile(handler: Handler?, file: File) {
         val bytes = ByteArray(2048)
         val totalLength = file.length()
@@ -144,6 +184,38 @@ class NetConnection(ip_address: String) {
             Log.e("tag", "send finish")
         } catch (e: Exception) {
             Log.e("tag", "e --> ${e.message}")
+            //e 为 socket相关时 连接断开
+        } finally {
+            mOutputStream?.flush()
+            fis?.close()
+        }
+    }
+
+    fun sendFile(listener: IStateListener?, file: File) {
+        val bytes = ByteArray(2048)
+        val totalLength = file.length()
+        var sendLength = 0.0
+        var percent = 0
+        var fis: FileInputStream? = null
+        try {
+            fis = FileInputStream(file)
+            var read = fis.read(bytes)
+            while (read != -1) {
+                sendLength += read
+                mOutputStream?.write(bytes, 0, read)
+                val p = ((sendLength / totalLength) * 100).toInt()
+                if (p > percent) {
+                    percent = p
+                    listener?.onProgress(file.name, ProgressDialog.TYPE_UPLOAD, percent)
+                }
+//                if (sendLength >= totalLength)
+//                    break
+                read = fis.read(bytes)
+            }
+            Log.e("tag", "send finish")
+        } catch (e: Exception) {
+            Log.e("tag", "e --> ${e.message}")
+            listener?.onConnectState(Command.STATE_DISCONNECT)//直接处理为断开连接不准确，待优化
             //e 为 socket相关时 连接断开
         } finally {
             mOutputStream?.flush()

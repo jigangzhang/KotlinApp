@@ -7,10 +7,11 @@ import android.os.Message
 import android.util.Log
 import android.view.View
 import android.view.inputmethod.InputMethodManager
+import com.god.seep.weather.aidl.FileInfo
+import com.god.seep.weather.aidl.IStateListener
+import com.god.seep.weather.aidl.UserInfo
 import com.god.seep.weather.dialog.ProgressDialog
 import com.god.seep.weather.entity.Entity
-import com.god.seep.weather.entity.FileInfo
-import com.god.seep.weather.entity.UserInfo
 import com.god.seep.weather.extentions.gson
 import com.god.seep.weather.net.Command
 import com.god.seep.weather.net.NetConnection
@@ -35,6 +36,21 @@ fun handleFileList(connection: NetConnection?, handler: Handler?) {
     }
 }
 
+fun handleFileList(connection: NetConnection?, listener: IStateListener?) {
+    try {
+        connection?.writeCommand(Command.FILE_LIST)
+        val data = connection?.readCommand()
+        val entity = data?.gson<List<FileInfo>>(object : TypeToken<Entity<List<FileInfo>>>() {}.type)
+        if (entity?.success!!)
+            listener?.onRevFileList(entity.data)
+        else
+            Log.e("tag", entity.toString())
+    } catch (e: Exception) {
+        Log.e("tag", e.message)
+        listener?.onConnectState(Command.STATE_DISCONNECT)
+    }
+}
+
 fun receiveFile(connection: NetConnection?, handler: Handler?, fileInfo: FileInfo) {
     val path = Environment.getExternalStorageDirectory().absolutePath + File.separator + NetConnection.FOLDER_NAME + File.separator + fileInfo.fileName
     val file = File(path)
@@ -53,6 +69,18 @@ fun receiveFile(connection: NetConnection?, handler: Handler?, fileInfo: FileInf
     connection?.saveFile(handler, fileInfo)
 }
 
+fun receiveFile(connection: NetConnection?, listener: IStateListener?, fileInfo: FileInfo) {
+    val path = Environment.getExternalStorageDirectory().absolutePath + File.separator + NetConnection.FOLDER_NAME + File.separator + fileInfo.fileName
+    val file = File(path)
+    if (file.exists()) {
+        listener?.onProgress(fileInfo.fileName, ProgressDialog.TYPE_DOWNLOAD, 100)
+        return
+    }
+    connection?.writeCommand(Command.SEND_FILE + fileInfo.fileName)
+    listener?.onProgress(fileInfo.fileName, ProgressDialog.TYPE_DOWNLOAD, 0)
+    connection?.saveFile(listener, fileInfo)
+}
+
 fun sendFile(connection: NetConnection?, handler: Handler?, path: String) {
     val file = File(path)
     val message = Message()
@@ -61,10 +89,20 @@ fun sendFile(connection: NetConnection?, handler: Handler?, path: String) {
     message.arg1 = 0
     message.arg2 = ProgressDialog.TYPE_UPLOAD
     handler?.sendMessage(message)
-    val info = FileInfo(file.name, file.length(), file.lastModified(), downloading = false, downloaded = true)
+    val info = FileInfo(file.name, file.length(), file.lastModified(), false, true)
     val json = Gson().toJson(info)
     connection?.writeCommand(Command.REV_FILE + json)
     connection?.sendFile(handler, file)
+
+}
+
+fun sendFile(connection: NetConnection?, listener: IStateListener?, path: String) {
+    val file = File(path)
+    listener?.onProgress(file.name, ProgressDialog.TYPE_UPLOAD, 0)
+    val info = FileInfo(file.name, file.length(), file.lastModified(), false, true)
+    val json = Gson().toJson(info)
+    connection?.writeCommand(Command.REV_FILE + json)
+    connection?.sendFile(listener, file)
 
 }
 

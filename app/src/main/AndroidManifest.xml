@@ -14,10 +14,13 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+
         <service
             android:name=".ui.RemoteTransportService"
             android:enabled="true"
-            android:exported="true"></service>
+            android:exported="false"
+            android:process=":remote" />
+
         <service
             android:name=".ui.TransportService"
             android:enabled="true"
@@ -27,6 +30,7 @@
             android:name=".ui.MainActivity"
             android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar" />
+
         <activity
             android:name=".ui.TransportActivity"
             android:launchMode="singleTask">
@@ -38,6 +42,7 @@
                 <action android:name="android.intent.action.VIEW" />
             </intent-filter>
         </activity>
+
         <activity android:name=".ui.UserActivity" />
 
         <provider

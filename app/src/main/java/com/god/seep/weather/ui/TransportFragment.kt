@@ -12,9 +12,9 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import com.god.seep.weather.R
 import com.god.seep.weather.adapter.FileListAdapter
 import com.god.seep.weather.adapter.OnItemClickListener
+import com.god.seep.weather.aidl.FileInfo
 import com.god.seep.weather.dialog.MenuDialog
 import com.god.seep.weather.dialog.NoticeDialog
-import com.god.seep.weather.entity.FileInfo
 import com.god.seep.weather.extentions.toast
 import com.god.seep.weather.net.NetConnection
 import io.reactivex.Observable
@@ -62,7 +62,7 @@ class TransportFragment : Fragment() {
 
             override fun onItemClick(item: FileInfo, position: Int) {
                 if (mType == FILE_TYPE_REMOTE)
-                    NoticeDialog(mContext, item.fileName) {
+                    NoticeDialog(mContext, item.fileName!!) {
                         mListener?.fetchRemote(item)
                     }.show()
             }

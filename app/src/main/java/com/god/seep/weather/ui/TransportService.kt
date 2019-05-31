@@ -8,7 +8,7 @@ import android.os.*
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.god.seep.weather.R
-import com.god.seep.weather.entity.FileInfo
+import com.god.seep.weather.aidl.FileInfo
 import com.god.seep.weather.net.Command
 import com.god.seep.weather.net.NetConnection
 import com.god.seep.weather.util.getAllUser

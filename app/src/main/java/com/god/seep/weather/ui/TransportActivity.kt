@@ -16,6 +16,8 @@ import androidx.appcompat.app.AppCompatActivity
 import com.god.seep.weather.R
 import com.god.seep.weather.adapter.FilePageAdapter
 import com.god.seep.weather.aidl.FileInfo
+import com.god.seep.weather.aidl.IStateListener
+import com.god.seep.weather.aidl.ITransportManager
 import com.god.seep.weather.dialog.ProgressDialog
 import com.god.seep.weather.entity.Entity
 import com.god.seep.weather.extentions.toast
@@ -32,10 +34,10 @@ import kotlinx.android.synthetic.main.activity_transport.*
  */
 class TransportActivity : AppCompatActivity() {
     private lateinit var pageAdapter: FilePageAdapter
+    private var mTransportManager: ITransportManager? = null
     private var generetor: Observable<List<FileInfo>>? = null
     private var emitter: ObservableEmitter<List<FileInfo>>? = null
     private var progressDialog: ProgressDialog? = null
-    private var mService: TransportService? = null
 
     private val mainHandler = @SuppressLint("HandlerLeak") object : Handler() {
         override fun handleMessage(msg: Message?) {
@@ -85,6 +87,25 @@ class TransportActivity : AppCompatActivity() {
         initData()
     }
 
+    var stateListener = object : IStateListener.Stub() {
+        override fun onConnectState(state: Int) {
+            mainHandler.sendEmptyMessage(state)
+        }
+
+        override fun onProgress(name: String?, type: Int, progress: Int) {
+            val message = Message.obtain()
+            message.what = Command.PROGRESS
+            message.obj = name
+            message.arg1 = progress
+            message.arg2 = ProgressDialog.TYPE_UPLOAD
+            mainHandler.sendMessage(message)
+        }
+
+        override fun onRevFileList(list: MutableList<FileInfo>?) {
+            emitter?.onNext(list!!)
+        }
+    }
+
     var conn: ServiceConnection = object : ServiceConnection {
         override fun onServiceDisconnected(name: ComponentName?) {
             Log.e("tag", "binder -- onServiceDisconnected -- ${name?.className}")
@@ -96,19 +117,20 @@ class TransportActivity : AppCompatActivity() {
 
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             Log.e("tag", "binder -- onServiceConnected -- ${name?.className}")
-            mService = (service as TransportService.TransportBinder).getService()
-            service.linkToDeath(death, 0)
-            pageAdapter.hService = mService
-            mService?.mainHandler = this@TransportActivity.mainHandler
-            mService?.connect(ip_address.text.toString())
+            mTransportManager = ITransportManager.Stub.asInterface(service)
+            mTransportManager?.registerListener(stateListener)
+            service?.linkToDeath(death, 0)
+            pageAdapter.transportManager = mTransportManager
+            mTransportManager?.connect(ip_address.text.toString())
         }
     }
 
-    var death = IBinder.DeathRecipient {
+    val death: IBinder.DeathRecipient = IBinder.DeathRecipient {
         Log.e("tag", "binder -- linkToDeath -- binderDied")
-//        mService.asBinder.unlinkToDeath(this, 0)
+        //待实现--正在loading时隐藏loading， 进度框显示时，隐藏，并提示--
+//        mTransportManager?.asBinder()?.unlinkToDeath(death, 0)
         bindService(
-                Intent(this@TransportActivity, TransportService::class.java),
+                Intent(this@TransportActivity, RemoteTransportService::class.java),
                 conn,
                 Context.BIND_AUTO_CREATE
         )
@@ -129,10 +151,10 @@ class TransportActivity : AppCompatActivity() {
             if (TextUtils.isEmpty(ip))
                 toast("请输入服务端IP地址")
             else {
-                if (mService == null)
-                    bindService(Intent(this, TransportService::class.java), conn, Context.BIND_AUTO_CREATE)
+                if (mTransportManager == null)
+                    bindService(Intent(this, RemoteTransportService::class.java), conn, Context.BIND_AUTO_CREATE)
                 else
-                    mService?.connect(ip)
+                    mTransportManager?.connect(ip)
             }
         }
     }
@@ -164,10 +186,7 @@ class TransportActivity : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == 0 && data != null) {
             val uri = data.data
-            val message = Message.obtain()
-            message.what = Command.UPLOAD_FILE
-            message.obj = uri?.getRealPath(this)
-            mService?.sendMessage(message)
+            mTransportManager?.sendFile(uri?.getRealPath(themedContext))
         }
     }
 

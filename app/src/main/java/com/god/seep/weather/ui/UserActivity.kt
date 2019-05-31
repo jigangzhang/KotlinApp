@@ -11,8 +11,8 @@ import android.util.Log
 import androidx.recyclerview.widget.DividerItemDecoration
 import com.god.seep.weather.R
 import com.god.seep.weather.adapter.UserListAdapter
+import com.god.seep.weather.aidl.UserInfo
 import com.god.seep.weather.entity.Entity
-import com.god.seep.weather.entity.UserInfo
 import com.god.seep.weather.net.Command
 import com.hwangjr.rxbus.RxBus
 import com.hwangjr.rxbus.annotation.Subscribe

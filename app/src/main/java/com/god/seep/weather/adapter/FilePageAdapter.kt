@@ -4,7 +4,8 @@ import android.os.Message
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentPagerAdapter
-import com.god.seep.weather.entity.FileInfo
+import com.god.seep.weather.aidl.FileInfo
+import com.god.seep.weather.aidl.ITransportManager
 import com.god.seep.weather.net.Command
 import com.god.seep.weather.ui.TransportFragment
 import com.god.seep.weather.ui.TransportListener
@@ -15,22 +16,27 @@ class FilePageAdapter(var generator: Observable<List<FileInfo>>, fragmentManager
     : FragmentPagerAdapter(fragmentManager), TransportListener {
 
     var hService: TransportService? = null
+    var transportManager: ITransportManager? = null
 
     override fun fetchRemote(info: FileInfo): Boolean? {
-        val message = Message()
-        message.run {
-            what = Command.GET_FILE
-            obj = info
-        }
-        return hService?.sendMessage(message)
+//        val message = Message()
+//        message.run {
+//            what = Command.GET_FILE
+//            obj = info
+//        }
+//        return hService?.sendMessage(message)
+        transportManager?.downFile(info)
+        return true
     }
 
     override fun fetchFileList(): Boolean? {
-        val msg = Message.obtain()
-        msg.run {
-            what = Command.GET_FILE_LIST
-        }
-        return hService?.sendMessage(msg)
+//        val msg = Message.obtain()
+//        msg.run {
+//            what = Command.GET_FILE_LIST
+//        }
+//        return hService?.sendMessage(msg)
+        transportManager?.getFileList()
+        return if (transportManager == null) null else true
     }
 
     override fun getCount(): Int {
