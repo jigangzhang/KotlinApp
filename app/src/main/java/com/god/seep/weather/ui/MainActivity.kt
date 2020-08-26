@@ -2,15 +2,14 @@ package com.god.seep.weather.ui
 
 import android.Manifest
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentPagerAdapter
 import com.god.seep.weather.R
-import com.god.seep.weather.entity.Request
 import com.god.seep.weather.extentions.toast
 import com.google.android.material.snackbar.Snackbar
 import com.tbruyelle.rxpermissions2.RxPermissions
@@ -40,15 +39,20 @@ class MainActivity : AppCompatActivity() {
         container.adapter = mSectionsPagerAdapter
 
         fab.setOnClickListener { view ->
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(Intent(this, TransportService::class.java))
+            }
             Snackbar.make(view, "SnackBar Click", Snackbar.LENGTH_SHORT)
                     .setAction("Action") {
                         it.width
-                        Thread(Runnable {
-                            Log.e("tag", "loading")
-                            Request("lanzhou").run()
-                        }).start()
+//                        Thread(Runnable {
+//                            Log.e("tag", "loading")
+//                            Request("lanzhou").run()
+//                        }).start()
+                        stopService(Intent(this, TransportService::class.java))
                     }.show()
         }
+        sbs.setOnClickListener { startService(Intent(this, TransportService::class.java)) }
 
         RxPermissions(this)
                 .requestEach(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE)

@@ -187,7 +187,7 @@ class TransportActivity : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == 0 && data != null) {
             val uri = data.data
-            mTransportManager?.sendFile(uri?.getRealPath(themedContext))
+            mTransportManager?.sendFile(uri?.getRealPath(this))
         }
     }
 

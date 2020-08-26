@@ -45,9 +45,9 @@ class UserActivity : AppCompatActivity() {
     }
 
     private fun initData() {
-        refresh.isRefreshing = true
+//        refresh.isRefreshing = true
         refresh.setOnRefreshListener {
-            refresh.isRefreshing = true
+//            refresh.isRefreshing = true
             mService.sendEmptyMessage(Command.GET_ALL_USER)
         }
         userAdapter = UserListAdapter()
@@ -57,7 +57,8 @@ class UserActivity : AppCompatActivity() {
 
     @Subscribe
     fun onUserEvent(users: Entity<List<UserInfo>>) {
-        refresh.isRefreshing = false
+//        refresh.isRefreshing = false
+        refresh.finishRefresh()
         if (users.success)
             userAdapter.data = users.data
     }

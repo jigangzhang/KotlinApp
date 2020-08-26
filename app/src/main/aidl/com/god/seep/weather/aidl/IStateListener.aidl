@@ -6,6 +6,7 @@ import com.god.seep.weather.aidl.FileInfo;
 /**
 * 回调接口，由客户端实现，注册到服务端
 * */
+//Declare any non-default types here with import statements
 interface IStateListener {
 
     void onConnectState(int state);

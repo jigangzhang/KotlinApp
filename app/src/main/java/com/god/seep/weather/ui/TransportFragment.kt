@@ -71,13 +71,15 @@ class TransportFragment : Fragment() {
         if (mType == FILE_TYPE_REMOTE) {
             generator?.subscribe { list ->
                 adapter.newData = list
-                mRootView.refresh.isRefreshing = false
+//                mRootView.refresh.isRefreshing = false
+                mRootView.refresh.finishRefresh()
             }
             mRootView.refresh.setOnRefreshListener {
                 val result = mListener?.fetchFileList()
                 if (result == null) {
                     mContext.toast("请检查连接是否已建立")
-                    mRootView.refresh.isRefreshing = false
+//                    mRootView.refresh.isRefreshing = false
+                    mRootView.refresh.finishRefresh()
                 }
             }
         } else {
@@ -93,7 +95,8 @@ class TransportFragment : Fragment() {
             fileList = folder.listFiles()
             list = fileList.map { FileInfo(it.name, it.length(), it.lastModified(), false, true) }
         }
-        mRootView.refresh.isRefreshing = false
+//        mRootView.refresh.isRefreshing = false
+        mRootView.refresh.finishRefresh()
         return list
     }
 

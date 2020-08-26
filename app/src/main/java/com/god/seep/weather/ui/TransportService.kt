@@ -46,7 +46,7 @@ class TransportService : Service() {
 
     override fun onCreate() {
         Log.e("tag", "onCreate --")
-        startForeground(NOTICES_ID, "连接未建立")
+//        startForeground(NOTICES_ID, "连接未建立")
     }
 
     fun connect(ip: String) {
@@ -63,12 +63,17 @@ class TransportService : Service() {
         mHThread?.tHandler?.sendEmptyMessage(what)
     }
 
+    var called = false
+
     /**
      * bindService时，为触发此方法
      */
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.e("tag", "onStartCommand --")
-        startForeground(NOTICES_ID, "后台连接中")
+        if (!called) {
+            startForeground(NOTICES_ID, "后台连接中")
+            called = true
+        }
         return super.onStartCommand(intent, flags, startId)
     }
 
